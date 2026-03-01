@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { fetchProjects } from '../store/projectsSlice';
 import { setTimerRunning } from '../store/timerSlice';
+import { createTimeEntry } from '../api';
 import { Play, Pause, RotateCcw, Clock, Calendar } from 'lucide-react';
 
 const TimerPage: React.FC = () => {
@@ -63,13 +64,9 @@ const TimerPage: React.FC = () => {
           if (selectedProjectId && sessionStartRef.current) {
             const elapsedHours = 1 / 3600; // 1 секунда в часах
             
-            fetch('http://localhost:3001/api/time-entries', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                projectId: selectedProjectId,
-                duration: elapsedHours,
-              }),
+            createTimeEntry({
+              projectId: selectedProjectId,
+              duration: elapsedHours,
             }).then(() => {
               dispatch(fetchProjects());
             }).catch(console.error);

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch } from '../hooks/useRedux';
 import { createProject, updateProject, fetchProjects } from '../store/projectsSlice';
+import { getProject } from '../api';
 import { ArrowLeft, Save } from 'lucide-react';
 
 const ProjectFormPage: React.FC = () => {
@@ -19,8 +20,7 @@ const ProjectFormPage: React.FC = () => {
   useEffect(() => {
     if (isEdit && id) {
       // Load project data
-      fetch(`http://localhost:3001/api/projects/${id}`)
-        .then((res) => res.json())
+      getProject(id)
         .then((data) => {
           setName(data.name);
           setTotalHours(data.totalHours.toString());

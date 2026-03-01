@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.calculateWeeklyPlan = calculateWeeklyPlan;
 exports.calculateDaysLeft = calculateDaysLeft;
+exports.calculateMinDaysLeft = calculateMinDaysLeft;
+exports.calculateRealDaysLeft = calculateRealDaysLeft;
 exports.recalculateOnSettingsChange = recalculateOnSettingsChange;
 exports.recalculateOnProjectChange = recalculateOnProjectChange;
 exports.getTodaySpentHours = getTodaySpentHours;
@@ -109,6 +111,7 @@ function calculateWeeklyPlan() {
 }
 /**
  * Рассчитывает количество оставшихся дней до завершения проекта
+ * на основе текущего недельного планирования
  */
 function calculateDaysLeft(project) {
     if (project.weeklyPlannedHours <= 0) {
@@ -119,6 +122,100 @@ function calculateDaysLeft(project) {
         return 0;
     }
     return Math.ceil((remainingHours / project.weeklyPlannedHours) * 7);
+}
+/**
+ * Рассчитывает минимальное количество дней до завершения проекта
+ * при условии что все остальные проекты завершены (вся неделя доступна этому проекту)
+ */
+function calculateMinDaysLeft(projectId) {
+    const project = database_1.db.prepare(`
+    SELECT totalHours - spentHours as remaining, weeklyPlannedHours
+    FROM projects WHERE id = ?
+  `).get(projectId);
+    if (!project || project.remaining <= 0) {
+        return 0;
+    }
+    // Если проект уже получает всё доступное время (weeklyPlannedHours = всё недельное время)
+    // то минимальный срок = реальному сроку
+    if (project.weeklyPlannedHours <= 0) {
+        return null;
+    }
+    // Минимальный срок = оставшееся время / время выделяемое проекту в неделю
+    return Math.ceil((project.remaining / project.weeklyPlannedHours) * 7);
+}
+/**
+ * Рассчитывает реальную дату окончания проекта с учётом последовательного
+ * завершения других проектов
+ */
+function calculateRealDaysLeft(targetProjectId) {
+    // Получаем все активные проекты с их параметрами
+    const projects = database_1.db.prepare(`
+    SELECT id, name, totalHours, spentHours, importance, weeklyPlannedHours
+    FROM projects 
+    WHERE status = 'active'
+    ORDER BY importance DESC
+  `).all();
+    if (projects.length === 0) {
+        return 0;
+    }
+    // Симулируем последовательное завершение проектов
+    let remainingProjects = projects.map(p => ({
+        id: p.id,
+        remaining: p.totalHours - p.spentHours,
+        importance: p.importance,
+        weeklyPlannedHours: p.weeklyPlannedHours
+    })).filter(p => p.remaining > 0);
+    if (remainingProjects.length === 0) {
+        return 0;
+    }
+    let totalDays = 0;
+    const maxWeeks = 52 * 5; // Максимум 5 лет
+    // Пока есть проекты и мы не дошли до целевого
+    while (remainingProjects.length > 0 && totalDays < maxWeeks * 7) {
+        // Сортируем по важности (наибольшая важность - первым получает время)
+        remainingProjects.sort((a, b) => b.importance - a.importance);
+        const currentProject = remainingProjects[0];
+        // Если это наш целевой проект
+        if (currentProject.id === targetProjectId) {
+            if (currentProject.weeklyPlannedHours <= 0) {
+                return null;
+            }
+            const daysNeeded = Math.ceil((currentProject.remaining / currentProject.weeklyPlannedHours) * 7);
+            return totalDays + daysNeeded;
+        }
+        // Сколько дней нужно для завершения текущего проекта
+        if (currentProject.weeklyPlannedHours <= 0) {
+            return null;
+        }
+        const daysForCurrent = Math.ceil((currentProject.remaining / currentProject.weeklyPlannedHours) * 7);
+        totalDays += daysForCurrent;
+        // Удаляем завершённый проект
+        remainingProjects.shift();
+        if (remainingProjects.length === 0) {
+            break;
+        }
+        // Пересчитываем weeklyPlannedHours для оставшихся проектов
+        // после завершения текущего, вся неделя доступна оставшимся
+        const totalImportance = remainingProjects.reduce((sum, p) => sum + p.importance, 0);
+        // Получаем общее недельное время
+        const settings = database_1.db.prepare('SELECT * FROM settings WHERE id = 1').get();
+        const weeklyAvailable = settings.monday +
+            settings.tuesday +
+            settings.wednesday +
+            settings.thursday +
+            settings.friday +
+            settings.saturday +
+            settings.sunday;
+        if (weeklyAvailable <= 0) {
+            return null;
+        }
+        // Пересчитываем weeklyPlannedHours для каждого оставшегося проекта
+        for (const p of remainingProjects) {
+            const share = p.importance / totalImportance;
+            p.weeklyPlannedHours = share * weeklyAvailable;
+        }
+    }
+    return null;
 }
 /**
  * Пересчитывает план при изменении настроек

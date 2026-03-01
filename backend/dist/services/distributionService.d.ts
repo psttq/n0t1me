@@ -6,8 +6,19 @@ import { Project } from '../models/types';
 export declare function calculateWeeklyPlan(): void;
 /**
  * Рассчитывает количество оставшихся дней до завершения проекта
+ * на основе текущего недельного планирования
  */
 export declare function calculateDaysLeft(project: Project): number | null;
+/**
+ * Рассчитывает минимальное количество дней до завершения проекта
+ * при условии что все остальные проекты завершены (вся неделя доступна этому проекту)
+ */
+export declare function calculateMinDaysLeft(projectId: string): number | null;
+/**
+ * Рассчитывает реальную дату окончания проекта с учётом последовательного
+ * завершения других проектов
+ */
+export declare function calculateRealDaysLeft(targetProjectId: string): number | null;
 /**
  * Пересчитывает план при изменении настроек
  */

@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../db/database';
 import { Project, ProjectWithStats } from '../models/types';
-import { calculateWeeklyPlan, calculateDaysLeft, calculateDailyRecommendation, getTodaySpentHours, getWeekSpentHours } from '../services/distributionService';
+import { calculateWeeklyPlan, calculateDailyRecommendation, getTodaySpentHours, getWeekSpentHours, calculateMinDaysLeft, calculateRealDaysLeft } from '../services/distributionService';
 
 const router = Router();
 
@@ -24,7 +24,10 @@ router.get('/', (req: Request, res: Response) => {
   // Добавляем вычисляемые поля
   const projectsWithStats: ProjectWithStats[] = projects.map(p => {
     const remainingHours = Math.max(0, p.totalHours - p.spentHours);
-    const daysLeft = p.status === 'completed' ? 0 : calculateDaysLeft(p);
+    // Реальный срок с учётом последовательного завершения других проектов
+    const daysLeft = p.status === 'completed' ? 0 : calculateRealDaysLeft(p.id);
+    // Минимальный срок (когда все остальные завершены) — для tooltip
+    const minDaysLeft = p.status === 'completed' ? 0 : calculateMinDaysLeft(p.id);
     const progress = p.totalHours > 0 ? (p.spentHours / p.totalHours) * 100 : 0;
 
     const dailyRec = dailyRecommendations[p.id] || { recommendedToday: 0, spentToday: 0, remainingToday: 0 };
@@ -39,6 +42,7 @@ router.get('/', (req: Request, res: Response) => {
       ...p,
       remainingHours,
       daysLeft,
+      minDaysLeft,
       progress: Math.min(100, progress),
       recommendedToday: dailyRec.recommendedToday,
       spentToday: dailyRec.spentToday,
@@ -68,7 +72,7 @@ router.get('/:id', (req: Request, res: Response) => {
   }
 
   const remainingHours = Math.max(0, project.totalHours - project.spentHours);
-  const daysLeft = project.status === 'completed' ? 0 : calculateDaysLeft(project);
+  const daysLeft = project.status === 'completed' ? 0 : calculateRealDaysLeft(project.id);
   const progress = project.totalHours > 0 ? (project.spentHours / project.totalHours) * 100 : 0;
 
   res.json({

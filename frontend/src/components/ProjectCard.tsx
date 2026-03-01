@@ -12,6 +12,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDelete }) => {
   const progress = project.progress || 0;
   const remainingHours = project.remainingHours ?? Math.max(0, project.totalHours - project.spentHours);
   const daysLeft = project.daysLeft ?? null;
+  const minDaysLeft = project.minDaysLeft ?? null;
   const weeklyPlanned = project.weeklyPlannedHours;
   const recommendedToday = project.recommendedToday ?? 0;
   const spentToday = project.spentToday ?? 0;
@@ -54,6 +55,21 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDelete }) => {
       return `${h}ч ${m}м`;
     }
     return `${m}м`;
+  };
+
+  // Форматирование даты окончания
+  const formatEndDate = () => {
+    if (daysLeft === null || daysLeft <= 0) return null;
+    
+    const today = new Date();
+    const endDate = new Date(today);
+    endDate.setDate(today.getDate() + daysLeft);
+    
+    const day = endDate.getDate();
+    const month = endDate.toLocaleDateString('ru', { month: 'long' });
+    const year = endDate.getFullYear();
+    
+    return `${day} ${month} ${year}`;
   };
 
   return (
@@ -117,11 +133,23 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDelete }) => {
           </div>
         </div>
         <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-1">
+          <div 
+            className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-1"
+          >
             <Calendar className="w-4 h-4" />
             <span className="text-xs">Срок</span>
           </div>
-          <div className="font-semibold text-gray-900 dark:text-white">{formatDaysLeft()}</div>
+          <div 
+            className="font-semibold text-gray-900 dark:text-white cursor-help" 
+            title={minDaysLeft !== null ? `Мин. срок: ${minDaysLeft} дней (если остальные проекты завершатся раньше)` : ''}
+          >
+            {formatDaysLeft()}
+          </div>
+          {formatEndDate() && (
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {formatEndDate()}
+            </div>
+          )}
         </div>
       </div>
 

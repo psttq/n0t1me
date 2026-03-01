@@ -13,6 +13,7 @@ export interface Project {
 export interface ProjectWithStats extends Project {
   remainingHours: number;
   daysLeft: number | null;
+  minDaysLeft: number | null;
   progress: number;
   recommendedToday?: number;
   spentToday?: number;
