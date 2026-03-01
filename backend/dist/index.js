@@ -12,8 +12,25 @@ const statisticsController_1 = __importDefault(require("./controllers/statistics
 const database_1 = require("./db/database");
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3001;
+// Разрешённые origins (можно через запятую в переменной окружения)
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000,http://127.0.0.1:3000').split(',');
+// CORS настройки
+const corsOptions = {
+    origin: (origin, callback) => {
+        // Разрешаем запросы без origin (например, от Postman) или если origin в списке
+        if (!origin || allowedOrigins.includes(origin.trim())) {
+            callback(null, true);
+        }
+        else {
+            callback(new Error('Not allowed by CORS'), false);
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+};
 // Middleware
-app.use((0, cors_1.default)());
+app.use((0, cors_1.default)(corsOptions));
 app.use(express_1.default.json());
 // Initialize database
 (0, database_1.initDatabase)();
