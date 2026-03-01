@@ -19,6 +19,16 @@ const formatHours = (hours: number) => {
   return `${m}м`;
 };
 
+// Функция для отображения в tooltip с выделением времени
+const formatTooltipTime = (hours: number) => {
+  const h = Math.floor(hours);
+  const m = Math.round((hours - h) * 60);
+  if (h > 0) {
+    return <><span className="text-primary font-semibold">{h}ч {m}м</span></>;
+  }
+  return <><span className="text-primary font-semibold">{m}м</span></>;
+};
+
 const DashboardPage: React.FC = () => {
   const [stats, setStats] = useState<Statistics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -116,7 +126,7 @@ const DashboardPage: React.FC = () => {
                 />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip 
-                  formatter={(value) => [`${Number(value).toFixed(2)}ч`, 'Время']}
+                  formatter={(value) => [formatTooltipTime(Number(value)), 'Время']}
                   labelFormatter={(label) => new Date(label).toLocaleDateString('ru')}
                   contentStyle={{ 
                     backgroundColor: document.documentElement.classList.contains('dark') ? '#1F2937' : '#fff', 
@@ -158,7 +168,7 @@ const DashboardPage: React.FC = () => {
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value) => `${Number(value).toFixed(1)}ч`} 
+                  formatter={(value) => [formatTooltipTime(Number(value)), 'Время']}
                   contentStyle={{ 
                     backgroundColor: document.documentElement.classList.contains('dark') ? '#1F2937' : '#fff', 
                     border: '1px solid #374151',
@@ -188,7 +198,7 @@ const DashboardPage: React.FC = () => {
               <XAxis dataKey="week" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip 
-                formatter={(value) => [`${Number(value).toFixed(1)}ч`, 'Время']} 
+                formatter={(value) => [formatTooltipTime(Number(value)), 'Время']} 
                 contentStyle={{ 
                   backgroundColor: document.documentElement.classList.contains('dark') ? '#1F2937' : '#fff', 
                   border: '1px solid #374151',
