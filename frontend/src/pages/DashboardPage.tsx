@@ -118,8 +118,14 @@ const DashboardPage: React.FC = () => {
                 <Tooltip 
                   formatter={(value) => [`${Number(value).toFixed(2)}ч`, 'Время']}
                   labelFormatter={(label) => new Date(label).toLocaleDateString('ru')}
-                  contentStyle={{ backgroundColor: document.documentElement.classList.contains('dark') ? '#1F2937' : '#fff', border: '1px solid #374151' }}
-                  labelStyle={{ color: document.documentElement.classList.contains('dark') ? '#F3F4F6' : '#111827' }}
+                  contentStyle={{ 
+                    backgroundColor: document.documentElement.classList.contains('dark') ? '#1F2937' : '#fff', 
+                    border: '1px solid #374151',
+                    color: document.documentElement.classList.contains('dark') ? '#F3F4F6' : '#111827'
+                  }}
+                  itemStyle={{
+                    color: document.documentElement.classList.contains('dark') ? '#F3F4F6' : '#111827'
+                  }}
                 />
                 <Bar dataKey="totalDuration" fill="#3B82F6" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -151,7 +157,17 @@ const DashboardPage: React.FC = () => {
                     <Cell key={entry.id} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => `${Number(value).toFixed(1)}ч`} contentStyle={{ backgroundColor: document.documentElement.classList.contains('dark') ? '#1F2937' : '#fff', border: '1px solid #374151' }} />
+                <Tooltip 
+                  formatter={(value) => `${Number(value).toFixed(1)}ч`} 
+                  contentStyle={{ 
+                    backgroundColor: document.documentElement.classList.contains('dark') ? '#1F2937' : '#fff', 
+                    border: '1px solid #374151',
+                    color: document.documentElement.classList.contains('dark') ? '#F3F4F6' : '#111827'
+                  }}
+                  itemStyle={{
+                    color: document.documentElement.classList.contains('dark') ? '#F3F4F6' : '#111827'
+                  }}
+                />
               </PieChart>
             </ResponsiveContainer>
           ) : (
@@ -171,7 +187,17 @@ const DashboardPage: React.FC = () => {
               <CartesianGrid strokeDasharray="3 3" stroke={document.documentElement.classList.contains('dark') ? '#374151' : '#f0f0f0'} />
               <XAxis dataKey="week" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip formatter={(value) => [`${Number(value).toFixed(1)}ч`, 'Время']} contentStyle={{ backgroundColor: document.documentElement.classList.contains('dark') ? '#1F2937' : '#fff', border: '1px solid #374151' }} />
+              <Tooltip 
+                formatter={(value) => [`${Number(value).toFixed(1)}ч`, 'Время']} 
+                contentStyle={{ 
+                  backgroundColor: document.documentElement.classList.contains('dark') ? '#1F2937' : '#fff', 
+                  border: '1px solid #374151',
+                  color: document.documentElement.classList.contains('dark') ? '#F3F4F6' : '#111827'
+                }}
+                itemStyle={{
+                  color: document.documentElement.classList.contains('dark') ? '#F3F4F6' : '#111827'
+                }}
+              />
               <Line 
                 type="monotone" 
                 dataKey="totalDuration" 
