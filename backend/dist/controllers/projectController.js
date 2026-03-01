@@ -22,6 +22,11 @@ router.get('/', (req, res) => {
         const daysLeft = p.status === 'completed' ? 0 : (0, distributionService_1.calculateDaysLeft)(p);
         const progress = p.totalHours > 0 ? (p.spentHours / p.totalHours) * 100 : 0;
         const dailyRec = dailyRecommendations[p.id] || { recommendedToday: 0, spentToday: 0, remainingToday: 0 };
+        // Рассчитываем недельные показатели
+        const weekSpent = (0, distributionService_1.getWeekSpentHours)(p.id);
+        const weekPlanned = p.weeklyPlannedHours;
+        const weekRemaining = Math.max(0, weekPlanned - weekSpent);
+        const weekProgress = weekPlanned > 0 ? (weekSpent / weekPlanned) * 100 : 0;
         return {
             ...p,
             remainingHours,
@@ -29,7 +34,11 @@ router.get('/', (req, res) => {
             progress: Math.min(100, progress),
             recommendedToday: dailyRec.recommendedToday,
             spentToday: dailyRec.spentToday,
-            remainingToday: dailyRec.remainingToday
+            remainingToday: dailyRec.remainingToday,
+            weekPlanned: weekPlanned,
+            weekSpent: weekSpent,
+            weekRemaining: weekRemaining,
+            weekProgress: Math.min(100, weekProgress)
         };
     });
     res.json(projectsWithStats);

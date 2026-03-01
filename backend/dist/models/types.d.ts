@@ -16,6 +16,10 @@ export interface ProjectWithStats extends Project {
     recommendedToday?: number;
     spentToday?: number;
     remainingToday?: number;
+    weekPlanned?: number;
+    weekSpent?: number;
+    weekRemaining?: number;
+    weekProgress?: number;
 }
 export interface Settings {
     id: number;

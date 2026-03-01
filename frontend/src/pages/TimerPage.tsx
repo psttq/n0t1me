@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { fetchProjects } from '../store/projectsSlice';
 import { setTimerRunning } from '../store/timerSlice';
-import { Play, Pause, RotateCcw, Clock } from 'lucide-react';
+import { Play, Pause, RotateCcw, Clock, Calendar } from 'lucide-react';
 
 const TimerPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -236,7 +236,7 @@ const TimerPage: React.FC = () => {
         </div>
 
         {/* Countdown */}
-        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+        <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
           <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
             Рекомендуемый сеанс на сегодня
           </div>
@@ -250,6 +250,40 @@ const TimerPage: React.FC = () => {
             }
           </div>
         </div>
+
+        {/* Weekly Plan */}
+        {selectedProject && selectedProject.weeklyPlannedHours > 0 && (
+          <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+            <div className="flex items-center gap-2 mb-1">
+              <Calendar className="w-4 h-4 text-primary" />
+              <span className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Эта неделя
+              </span>
+            </div>
+            <div className="flex justify-between items-start mb-2">
+              <div className='text-left'>
+                <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {formatHours(selectedProject.weekRemaining ?? Math.max(0, selectedProject.weeklyPlannedHours - (selectedProject.weekSpent ?? 0)))}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  осталось из {formatHours(selectedProject.weeklyPlannedHours)}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-primary">
+                  {Math.min(100, selectedProject.weekProgress ?? 0).toFixed(0)}%
+                </div>
+              </div>
+            </div>
+            {/* Weekly Progress Bar */}
+            <div className="h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-300"
+                style={{ width: `${Math.min(100, selectedProject.weekProgress ?? 0)}%` }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Controls */}
         <div className="flex justify-center gap-3">

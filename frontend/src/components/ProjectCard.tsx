@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Clock, Calendar, Edit2, Trash2, Sun } from 'lucide-react';
+import { Play, Clock, Calendar, Edit2, Trash2, Sun, TrendingUp } from 'lucide-react';
 import { Project } from '../types';
 
 interface ProjectCardProps {
@@ -17,10 +17,23 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDelete }) => {
   const spentToday = project.spentToday ?? 0;
   const remainingToday = project.remainingToday ?? 0;
 
+  // Недельные показатели
+  const weekPlanned = project.weekPlanned ?? weeklyPlanned;
+  const weekSpent = project.weekSpent ?? 0;
+  const weekRemaining = project.weekRemaining ?? Math.max(0, weekPlanned - weekSpent);
+  const weekProgress = project.weekProgress ?? 0;
+
   const getProgressColor = () => {
     if (progress >= 100) return 'bg-success';
     if (progress >= 75) return 'bg-primary';
     if (progress >= 50) return 'bg-warning';
+    return 'bg-danger';
+  };
+
+  const getWeekProgressColor = () => {
+    if (weekProgress >= 100) return 'bg-success';
+    if (weekProgress >= 75) return 'bg-primary';
+    if (weekProgress >= 50) return 'bg-warning';
     return 'bg-danger';
   };
 
@@ -100,7 +113,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDelete }) => {
             <span className="text-xs">Осталось</span>
           </div>
           <div className="font-semibold text-gray-900 dark:text-white">
-            {formatHours(remainingHours)} / {formatHours(project.totalHours)}
+            {formatHours(remainingHours)}
           </div>
         </div>
         <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
@@ -112,10 +125,28 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDelete }) => {
         </div>
       </div>
 
-      {/* Weekly Plan */}
-      {weeklyPlanned > 0 && (
-        <div className="text-sm text-gray-500 dark:text-gray-400 mb-2 pb-2 border-b border-gray-100 dark:border-gray-700">
-          В неделю: <span className="font-medium text-gray-700 dark:text-gray-300">{formatHours(weeklyPlanned)}</span>
+      {/* Weekly Progress */}
+      {weekPlanned > 0 && (
+        <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Эта неделя</span>
+          </div>
+          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <span>Выполнено: <span className="font-medium text-gray-700 dark:text-gray-300">{formatHours(weekSpent)}</span> из {formatHours(weekPlanned)}</span>
+            <span>{weekProgress.toFixed(0)}%</span>
+          </div>
+          <div className="h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-300 ${getWeekProgressColor()}`}
+              style={{ width: `${Math.min(weekProgress, 100)}%` }}
+            />
+          </div>
+          {weekRemaining > 0 && (
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Осталось на неделю: <span className="font-medium text-gray-700 dark:text-gray-300">{formatHours(weekRemaining)}</span>
+            </div>
+          )}
         </div>
       )}
 

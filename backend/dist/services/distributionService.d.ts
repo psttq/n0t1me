@@ -21,6 +21,10 @@ export declare function recalculateOnProjectChange(): void;
  */
 export declare function getTodaySpentHours(projectId: string): number;
 /**
+ * Получает время, затраченное на проект на этой неделе (с понедельника)
+ */
+export declare function getWeekSpentHours(projectId: string): number;
+/**
  * Рассчитывает рекомендуемое время на сегодня для каждого проекта
  * с учётом важности, доступного времени и уже затраченного сегодня
  */

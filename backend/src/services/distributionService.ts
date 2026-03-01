@@ -176,6 +176,29 @@ export function getTodaySpentHours(projectId: string): number {
 }
 
 /**
+ * Получает время, затраченное на проект на этой неделе (с понедельника)
+ */
+export function getWeekSpentHours(projectId: string): number {
+  // Получаем начало недели (понедельник)
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Если воскресенье, то -6, иначе день недели - 1
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - diff);
+  monday.setHours(0, 0, 0, 0);
+  
+  const mondayStr = monday.toISOString();
+  
+  const result = db.prepare(`
+    SELECT COALESCE(SUM(duration), 0) as total
+    FROM time_entries
+    WHERE projectId = ? AND date >= ?
+  `).get(projectId, mondayStr) as { total: number };
+  
+  return result.total;
+}
+
+/**
  * Рассчитывает рекомендуемое время на сегодня для каждого проекта
  * с учётом важности, доступного времени и уже затраченного сегодня
  */

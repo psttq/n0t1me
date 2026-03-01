@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../db/database';
 import { Project, ProjectWithStats } from '../models/types';
-import { calculateWeeklyPlan, calculateDaysLeft, calculateDailyRecommendation, getTodaySpentHours } from '../services/distributionService';
+import { calculateWeeklyPlan, calculateDaysLeft, calculateDailyRecommendation, getTodaySpentHours, getWeekSpentHours } from '../services/distributionService';
 
 const router = Router();
 
@@ -29,6 +29,12 @@ router.get('/', (req: Request, res: Response) => {
 
     const dailyRec = dailyRecommendations[p.id] || { recommendedToday: 0, spentToday: 0, remainingToday: 0 };
 
+    // Рассчитываем недельные показатели
+    const weekSpent = getWeekSpentHours(p.id);
+    const weekPlanned = p.weeklyPlannedHours;
+    const weekRemaining = Math.max(0, weekPlanned - weekSpent);
+    const weekProgress = weekPlanned > 0 ? (weekSpent / weekPlanned) * 100 : 0;
+
     return {
       ...p,
       remainingHours,
@@ -36,7 +42,11 @@ router.get('/', (req: Request, res: Response) => {
       progress: Math.min(100, progress),
       recommendedToday: dailyRec.recommendedToday,
       spentToday: dailyRec.spentToday,
-      remainingToday: dailyRec.remainingToday
+      remainingToday: dailyRec.remainingToday,
+      weekPlanned: weekPlanned,
+      weekSpent: weekSpent,
+      weekRemaining: weekRemaining,
+      weekProgress: Math.min(100, weekProgress)
     };
   });
 

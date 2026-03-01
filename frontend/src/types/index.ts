@@ -14,6 +14,10 @@ export interface Project {
   recommendedToday?: number;
   spentToday?: number;
   remainingToday?: number;
+  weekPlanned?: number;
+  weekSpent?: number;
+  weekRemaining?: number;
+  weekProgress?: number;
 }
 
 export interface Settings {
