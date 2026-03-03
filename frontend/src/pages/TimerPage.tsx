@@ -23,6 +23,7 @@ const TimerPage: React.FC = () => {
 
   const intervalRef = useRef<number | null>(null);
   const sessionStartRef = useRef<number | null>(null);
+  const projectIdRef = useRef<string>(''); // ref для хранения актуального ID проекта
 
   // Load projects
   useEffect(() => {
@@ -34,8 +35,14 @@ const TimerPage: React.FC = () => {
     const projectId = searchParams.get('project');
     if (projectId) {
       setSelectedProjectId(projectId);
+      projectIdRef.current = projectId;
     }
   }, [searchParams]);
+
+  // Обновляем ref при изменении selectedProjectId
+  useEffect(() => {
+    projectIdRef.current = selectedProjectId;
+  }, [selectedProjectId]);
 
   const activeProjects = projects.filter((p) => p.status === 'active');
 
@@ -43,16 +50,22 @@ const TimerPage: React.FC = () => {
   
   // Рекомендуемое время на сегодня для выбранного проекта (в часах)
   const recommendedTodayHours = selectedProject?.recommendedToday ?? 0;
-  // Конвертируем в секунды (или минимум 15 минут если есть рекомендация)
+  // Уже затраченное сегодня время
+  const spentTodayHours = selectedProject?.spentToday ?? 0;
+  // Сколько осталось рекомендуемого на сегодня (учитывает уже затраченное)
+  const remainingTodayHours = Math.max(0, recommendedTodayHours - spentTodayHours);
+  
+  // Конвертируем в секунды 
   const targetSeconds = recommendedTodayHours > 0 
-    ? Math.max(recommendedTodayHours * 3600, 15 * 60) 
+    ? remainingTodayHours * 3600
     : 25 * 60; // По умолчанию 25 минут если нет рекомендации
     
   const remainingSeconds = Math.max(0, targetSeconds - elapsedSeconds);
 
   // Timer logic - каждая секунда фиксируется
   const startTimer = useCallback(() => {
-    if (!isRunning && selectedProjectId) {
+    const currentProjectId = projectIdRef.current;
+    if (!isRunning && currentProjectId) {
       setIsRunning(true);
       sessionStartRef.current = Date.now();
       
@@ -61,14 +74,13 @@ const TimerPage: React.FC = () => {
           const newElapsed = prev + 1;
           
           // Каждую секунду отправляем данные на сервер
-          if (selectedProjectId && sessionStartRef.current) {
+          const pid = projectIdRef.current;
+          if (pid && sessionStartRef.current) {
             const elapsedHours = 1 / 3600; // 1 секунда в часах
             
             createTimeEntry({
-              projectId: selectedProjectId,
+              projectId: pid,
               duration: elapsedHours,
-            }).then(() => {
-              dispatch(fetchProjects());
             }).catch(console.error);
           }
           
@@ -76,7 +88,7 @@ const TimerPage: React.FC = () => {
         });
       }, 1000);
     }
-  }, [isRunning, selectedProjectId, dispatch]);
+  }, [isRunning]);
 
   const pauseTimer = useCallback(() => {
     if (isRunning) {
@@ -86,8 +98,10 @@ const TimerPage: React.FC = () => {
         intervalRef.current = null;
       }
       sessionStartRef.current = null;
+      // Обновляем проекты после паузы
+      dispatch(fetchProjects());
     }
-  }, [isRunning]);
+  }, [isRunning, dispatch]);
 
   const resetTimer = useCallback(() => {
     setIsRunning(false);
@@ -97,7 +111,9 @@ const TimerPage: React.FC = () => {
       intervalRef.current = null;
     }
     sessionStartRef.current = null;
-  }, []);
+    // Обновляем проекты после сброса
+    dispatch(fetchProjects());
+  }, [dispatch]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -132,7 +148,7 @@ const TimerPage: React.FC = () => {
   const formatRemaining = (totalSeconds: number) => {
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
+    const seconds = Math.floor(totalSeconds % 60);
     
     if (hours > 0) {
       return `${hours}ч ${minutes}м ${seconds}с`;
@@ -144,7 +160,9 @@ const TimerPage: React.FC = () => {
   };
 
   const handleProjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedProjectId(e.target.value);
+    const newId = e.target.value;
+    setSelectedProjectId(newId);
+    projectIdRef.current = newId;
     resetTimer();
   };
 
@@ -242,7 +260,7 @@ const TimerPage: React.FC = () => {
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             {recommendedTodayHours > 0 
-              ? `Рекомендовано сегодня: ${formatHours(recommendedTodayHours)}`
+              ? `Рекомендовано: ${formatRemaining(recommendedTodayHours*3600)}, затрачено сегодня: ${formatRemaining(spentTodayHours*3600)}`
               : 'Нет рекомендации на сегодня'
             }
           </div>
